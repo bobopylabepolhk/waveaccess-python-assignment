@@ -1,7 +1,7 @@
 from fastapi import FastAPI
+from api import tasks, users
 
-app = FastAPI()
+app = FastAPI(title='bugtracker')
 
-@app.get("/")
-async def initial_route():
-    return {"status": 200}
+app.include_router(tasks.router)
+app.include_router(users.router)

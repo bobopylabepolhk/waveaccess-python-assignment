@@ -1,13 +1,13 @@
 version: '3'
 services:
   waveaccess-python-assignment:
-    container_name: waveaccess-python-assignment.backend
+    container_name: waveaccess-python-assignment
     build: app/
     volumes: 
       - ./app/src/:/code
     restart: always
     depends_on:
-      - postgres
+      - pgsql
     env_file:
       - .env
     ports:
@@ -15,28 +15,25 @@ services:
     networks:
       - backend
   
-  postgres:
-    container_name: postgres
+  pgsql:
+    container_name: pgsql
     image: postgres:14
     volumes:
-      - postgres:/data/postgres
+      - postgres_data:/var/lib/postgresql/data
     restart: always
-    env_file: ".env"
+    env_file:
+      - .env
+    user: ${POSTGRES_USER}
     ports:
-      - ${PGSQL_PORT}:${PGSQL_PORT}
+      - ${PGPORT}:${PGPORT}
     expose:
-      - ${PGSQL_PORT}
-    environment:
-      POSTGRES_USER: ${PGSQL_USER}
-      POSTGRES_PASSWORD: ${PGSQL_PASSWORD}
-      POSTGRES_DB: ${PGSQL_NAME}
-      PGDATA: /data/postgres
+      - ${PGPORT}
     networks:
       - backend
 
 volumes:
   waveaccess-python-assignment:
-  postgres:
+  postgres_data:
 
 networks:
   backend:
