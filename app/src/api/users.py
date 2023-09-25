@@ -1,7 +1,9 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends
-from models.response import EntityId
-from models.user import UserCredentialsModel, UserEditModel
+from core.constants import UserRoles
+from models.response import JWTResponse, EntityId
+from core.security import has_access_by_role
+from models.user import UserRegisterModel, UserLoginModel, UserEditModel
 from services.users import UsersService
 
 UsersServiceDep = Annotated[UsersService, Depends(UsersService)]
@@ -18,23 +20,21 @@ async def get_users(users_service: UsersServiceDep):
     return tasks
 
 @router.post('/login')
-async def login(credentials: UserCredentialsModel, users_service: UsersServiceDep):
-    # TODO
-    pass
+async def login(credentials: UserLoginModel, users_service: UsersServiceDep):
+    token = await users_service.login(credentials)
+
+    return JWTResponse(access_token=token)
 
 @router.post('/register')
 async def register(
-    credentials: UserCredentialsModel, 
+    credentials: UserRegisterModel, 
     users_service: UsersServiceDep
 ):
-    # WIP
-    # TODO login()
-    user_id = await users_service.register(credentials)
+    token = await users_service.register(credentials)
 
-    return EntityId(id=user_id)
+    return JWTResponse(access_token=token)
 
-
-@router.patch('/edit')
+@router.patch('/edit', dependencies=[Depends(has_access_by_role(UserRoles.MANAGER))])
 async def edit_user(payload: UserEditModel, users_service: UsersServiceDep):
     user_id = await users_service.edit_user(payload)
 

@@ -1,5 +1,6 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends
+from core.security import has_access
 from models.response import EntityId
 from models.task import TaskAddModel
 
@@ -7,7 +8,7 @@ from services.tasks import TasksService
 
 TasksServiceDep = Annotated[TasksService, Depends(TasksService)]
 
-router = APIRouter(prefix='/tasks', tags=['tasks'])
+router = APIRouter(prefix='/tasks', tags=['tasks'], dependencies=[Depends(has_access)])
 
 @router.get('/')
 async def get_tasks(

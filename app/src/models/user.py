@@ -1,17 +1,22 @@
 from typing import Optional
 from pydantic import BaseModel
 
-class UserModel(BaseModel):
+class UserDisplayModel(BaseModel):
 	id: int
 	login: str
-	role: str
+	role: Optional[str]
 
+class UserModel(UserDisplayModel):
+	password: str
+	role: int
 	class Config:
 		from_attributes = True
 
-class UserCredentialsModel(BaseModel):
+class UserLoginModel(BaseModel):
 	login: str
 	password: str
+
+class UserRegisterModel(UserLoginModel):
 	role: Optional[int]
 
 class UserEditModel(BaseModel):

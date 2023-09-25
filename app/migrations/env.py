@@ -16,14 +16,14 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# add your model's MetaData object here
-# for 'autogenerate' support
-from db.base import Base
-from db import *
-from core.settings import get_pg_conn_str
+# >> alembic.ini: prepend_sys_path already set to .src
+
+from db.base import Base # pyright: ignore
+from db import * # pyright: ignore
+from core.settings import settings # pyright: ignore
 
 target_metadata = Base.metadata
-config.set_main_option('sqlalchemy.url', get_pg_conn_str(True))
+config.set_main_option('sqlalchemy.url', settings.get_pg_conn_str(True))
 
 
 def run_migrations_offline() -> None:
