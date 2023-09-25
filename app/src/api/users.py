@@ -1,7 +1,7 @@
 from typing import Annotated
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, status
 from core.constants import UserRoles
-from models.response import JWTResponse, EntityId
+from models.response import JWTResponse
 from core.security import has_access_by_role
 from models.user import UserRegisterModel, UserLoginModel, UserEditModel
 from services.users import UsersService
@@ -10,7 +10,7 @@ UsersServiceDep = Annotated[UsersService, Depends(UsersService)]
 
 router = APIRouter(
     prefix='/users',
-    tags=['Users'],
+    tags=['users'],
 )
 
 @router.get('/')
@@ -36,6 +36,6 @@ async def register(
 
 @router.patch('/edit', dependencies=[Depends(has_access_by_role(UserRoles.MANAGER))])
 async def edit_user(payload: UserEditModel, users_service: UsersServiceDep):
-    user_id = await users_service.edit_user(payload)
+    await users_service.edit_user(payload)
 
-    return EntityId(id=user_id)
+    return status.HTTP_200_OK

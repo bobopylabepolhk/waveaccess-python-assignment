@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import  Generic, Type, TypeVar
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy import insert, select, update
@@ -13,6 +14,18 @@ class DBAdapter(Generic[TK]):
 
 	def __init__(self, session: AsyncSession):
 		self.session = session
+	
+	@staticmethod
+	def _add_initial_timestamps(data: dict):
+		created_at = datetime.utcnow()
+
+		return { **data, 'created_at': created_at, 'updated_at': created_at }
+	
+	@staticmethod
+	def _update_timestamp(data: dict):
+		updated_at = datetime.utcnow()
+
+		return { **data, 'updated_at': updated_at }
 
 	async def commit(self):
 		await self.session.commit()
@@ -30,16 +43,16 @@ class DBAdapter(Generic[TK]):
 		return res.scalar_one_or_none()
 
 	async def add(self, data: dict) -> int:
-		stmt = insert(self.model).values(**data).returning(self.model.id)
+		data_with_timestamp = self._add_initial_timestamps(data)
+		stmt = insert(self.model).values(**data_with_timestamp).returning(self.model.id)
 		res = await self.session.execute(stmt)
 
 		return res.scalar_one()
 	
-	async def edit_by_id(self, id: int, data: dict) -> int:
-		stmt = update(self.model).values(**data).filter_by(id=id).returning(self.model.id)
-		res = await self.session.execute(stmt)
-
-		return res.scalar_one()
+	async def edit_by_id(self, id: int, data: dict):
+		data_with_timestamp = self._update_timestamp(data)
+		stmt = update(self.model).values(**data_with_timestamp).filter_by(id=id).returning(self.model.id)
+		await self.session.execute(stmt)
 			
 
 ''' prepare postgres connection '''
