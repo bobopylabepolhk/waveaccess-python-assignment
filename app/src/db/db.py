@@ -1,13 +1,14 @@
-from typing import  Type
+from typing import  Generic, Type, TypeVar
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy import insert, select, update
 from sqlalchemy.engine import Result
 from db.base import Base
-from core.settings import get_pg_conn_str
+from core.settings import settings
 
 ''' ORM Adapter '''
 
-class DBAdapter:
+TK = TypeVar('TK')
+class DBAdapter(Generic[TK]):
 	model: Type[Base]
 
 	def __init__(self, session: AsyncSession):
@@ -16,19 +17,21 @@ class DBAdapter:
 	async def commit(self):
 		await self.session.commit()
 	
-	async def find_all(self):
+	async def find_all(self) -> list[TK]:
 		stmt = select(self.model)
 		res: Result = await self.session.execute(stmt)
 	
 		return [row.to_json() for row in res.scalars().all()]
 	
-	async def find_by_id(self, id: int):
-		return await self.session.get(self.model, id)
+	async def find_by_id(self, id: int) -> TK | None:
+		stmt = select(self.model).where(self.model.id == id)
+		res: Result = await self.session.execute(stmt)
+	
+		return res.scalar_one_or_none()
 
 	async def add(self, data: dict) -> int:
 		stmt = insert(self.model).values(**data).returning(self.model.id)
 		res = await self.session.execute(stmt)
-		await self.session.flush()
 
 		return res.scalar_one()
 	
@@ -41,11 +44,12 @@ class DBAdapter:
 
 ''' prepare postgres connection '''
 
-engine = create_async_engine(get_pg_conn_str())
+engine = create_async_engine(settings.get_pg_conn_str())
 get_session = async_sessionmaker(engine, expire_on_commit=False)
 
-class DBConnector:
-	def __init__(self, adapter: Type[DBAdapter]):
+T = TypeVar('T')
+class DBConnector(Generic[T]):
+	def __init__(self, adapter: Type[T]):
 		self._adapter = adapter
 
 	async def __aenter__(self):
