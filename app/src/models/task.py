@@ -16,9 +16,6 @@ class TaskModel(BaseModel):
 	asignee: Optional[int]
 	# blocks: Optional[list[int]]
 
-	class Config:
-		from_attributes = True
-
 class TaskAddModel(BaseModel):
 	task_type: str
 	status: str

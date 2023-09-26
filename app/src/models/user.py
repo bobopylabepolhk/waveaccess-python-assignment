@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel
 
@@ -9,8 +10,8 @@ class UserDisplayModel(BaseModel):
 class UserModel(UserDisplayModel):
 	password: str
 	role: int
-	class Config:
-		from_attributes = True
+	created_at: datetime
+	updated_at: datetime
 
 class UserLoginModel(BaseModel):
 	login: str

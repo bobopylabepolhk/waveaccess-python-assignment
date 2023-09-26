@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Type
 from sqlalchemy import Result, select
 from core.constants import UserRoles
@@ -10,6 +11,8 @@ from models.user import UserDisplayModel, UserModel
 
 class Users(Base):
 	login: Mapped[str]
+	created_at: Mapped[datetime]
+	updated_at: Mapped[datetime]
 	password: Mapped[str]
 	role: Mapped[int]
 

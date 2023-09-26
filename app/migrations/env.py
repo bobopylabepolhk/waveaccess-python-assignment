@@ -17,10 +17,13 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # >> alembic.ini: prepend_sys_path already set to .src
-
+from dotenv import load_dotenv
 from db.base import Base # pyright: ignore
 from db import * # pyright: ignore
-from core.settings import settings # pyright: ignore
+from core.settings import Settings # pyright: ignore
+
+load_dotenv()
+settings = Settings()
 
 target_metadata = Base.metadata
 config.set_main_option('sqlalchemy.url', settings.get_pg_conn_str(True))

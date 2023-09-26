@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import  Generic, Type, TypeVar
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
-from sqlalchemy import insert, select, update
+from sqlalchemy import delete, insert, select, update
 from sqlalchemy.engine import Result
 from db.base import Base
 from core.settings import settings
@@ -53,7 +53,16 @@ class DBAdapter(Generic[TK]):
 		data_with_timestamp = self._update_timestamp(data)
 		stmt = update(self.model).values(**data_with_timestamp).filter_by(id=id).returning(self.model.id)
 		await self.session.execute(stmt)
-			
+	
+	async def delete_by_id(self, id: int) -> bool:
+		item = await self.find_by_id(id)
+		stmt = delete(self.model).where(self.model.id == id)
+		
+		if not item:
+			return False	
+		
+		await self.session.execute(stmt)
+		return True
 
 ''' prepare postgres connection '''
 
