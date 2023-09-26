@@ -71,6 +71,9 @@ class TasksService:
     async def get_task_by_id(self, id: int) -> TaskModel | None:
         async with self.conn as c:
             task: TaskModel | None = await c.adapter.find_by_id(id)
+
+            if not task:
+                raise HTTPException(404, TASK_NOT_FOUND_BY_ID.format(id))
             
             return task
 
@@ -96,3 +99,9 @@ class TasksService:
             await c.adapter.edit_by_id(id, data)
             await c.adapter.commit()
 
+    async def delete_task(self, id: int):
+        async with self.conn as c:
+            is_deleted = await c.adapter.delete_by_id(id)
+
+            if not is_deleted:
+                raise HTTPException(404, TASK_NOT_FOUND_BY_ID.format(id))

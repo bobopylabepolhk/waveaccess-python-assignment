@@ -1,8 +1,8 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends, status
+from api.dependencies import has_role_dep
 from core.constants import UserRoles
 from models.response import JWTResponse
-from core.security import has_access_by_role
 from models.user import UserRegisterModel, UserLoginModel, UserEditModel
 from services.users import UsersService
 
@@ -34,7 +34,7 @@ async def register(
 
     return JWTResponse(access_token=token)
 
-@router.patch('/edit', dependencies=[Depends(has_access_by_role(UserRoles.MANAGER))])
+@router.patch('/edit', dependencies=[has_role_dep(UserRoles.MANAGER)])
 async def edit_user(payload: UserEditModel, users_service: UsersServiceDep):
     await users_service.edit_user(payload)
 
