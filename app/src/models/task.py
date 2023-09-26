@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 class TaskModel(BaseModel):
 	id: int
@@ -22,10 +22,13 @@ class TaskModel(BaseModel):
 class TaskAddModel(BaseModel):
 	task_type: str
 	status: str
-	priority: int
+	priority: int = Field(serialization_alias='priority_id')
 	name: str
-	author: int
+	author: int = Field(serialization_alias='author_id')
 	description: Optional[str] = None
-	asignee: Optional[int] = None
+	asignee: Optional[int] = Field(serialization_alias='asignee_id')
+
+class TaskEditModel(TaskAddModel):
+	id: int
 
 
