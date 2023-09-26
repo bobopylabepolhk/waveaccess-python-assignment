@@ -34,8 +34,8 @@ async def register(
 
     return JWTResponse(access_token=token)
 
-@router.patch('/edit', dependencies=[has_role_dep(UserRoles.MANAGER)])
-async def edit_user(payload: UserEditModel, users_service: UsersServiceDep):
-    await users_service.edit_user(payload)
+@router.patch('/{user_id}', dependencies=[has_role_dep(UserRoles.MANAGER)])
+async def edit_user(user_id: int, payload: UserEditModel, users_service: UsersServiceDep):
+    await users_service.edit_user(user_id, payload)
 
     return status.HTTP_200_OK

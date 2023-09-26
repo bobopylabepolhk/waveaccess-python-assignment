@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, status
 from api.dependencies import has_access_dep, has_role_dep
 from core.constants import UserRoles
 from models.response import EntityId
-from models.task import TaskAddModel
+from models.task import TaskAddModel, TaskEditModel, TasksAsigneeStatus
 
 from services.tasks import TasksService
 
@@ -40,10 +40,20 @@ async def add_task(
 @router.patch('/{task_id}', dependencies=[has_access_dep])
 async def edit_task(
     task_id: int,
-    task: TaskAddModel,
+    task: TaskEditModel,
     tasks_service: TasksServiceDep,
 ):
     await tasks_service.edit_task(task_id, task)
+
+    return status.HTTP_200_OK
+
+@router.patch('/{task_id}/status_asignee', dependencies=[has_access_dep])
+async def edit_task_asignee_status(
+    task_id: int,
+    asignee_status: TasksAsigneeStatus,
+    tasks_service: TasksServiceDep,
+):
+    await tasks_service.edit_status_asignee(task_id, asignee_status)
 
     return status.HTTP_200_OK
 

@@ -7,7 +7,7 @@ from db.users import Users
 from db.base import Base
 from core.constants import TaskPriority, TaskStatus, UserRoles
 from db.db import DBAdapter
-from models.task import TaskModel
+from models.task import TaskAddModel, TaskModel
 from sqlalchemy import ForeignKey, Result, select
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.exc import NoResultFound
@@ -51,5 +51,7 @@ class TasksAdapter(DBAdapter):
 			return role
 		except NoResultFound: 
 			raise HTTPException(404, NOT_FOUND_ASIGNEE_ID.format(asignee_id))
+	
+	#async def edit_task_update_history(self, task: TaskAddModel):
 			
 
