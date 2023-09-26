@@ -3,7 +3,6 @@ from core.security import verify_password, get_password_hash, create_jwt
 from core.messages import USER_NOT_FOUND_OR_WRONG_PASSWORD, USER_ALREADY_EXISTS
 
 from db.db import DBConnector
-from utils.extract_id_from_model_dump import extract_id_from_model_dump
 from db.users import UsersAdapter
 from models.user import UserLoginModel, UserRegisterModel, UserDisplayModel, UserEditModel
 
@@ -59,8 +58,7 @@ class UsersService:
 
 	async def edit_user(self, payload: UserEditModel):
 		async with self.conn as c:
-			user_id, data = extract_id_from_model_dump(payload.model_dump())
-			id = await c.adapter.edit_by_id(user_id, data)
+			id = await c.adapter.edit_by_id(payload.id, payload.model_dump(exclude={ 'id' }))
 			await c.adapter.commit()
 			
 			return id
