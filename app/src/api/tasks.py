@@ -2,13 +2,16 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, status
 
-from api.dependencies import has_access_dep, has_role_dep
+from api.dependencies import current_user_id_dep, has_access_dep, has_role_dep
 from core.constants import UserRoles
 from models.response import EntityId
 from models.task import TaskAddModel, TaskEditModel, TasksAsigneeStatus
+from models.task_linked import TaskLinkedAddModel
+from services.task_linked import TaskLinkedService
 from services.tasks import TasksService
 
 TasksServiceDep = Annotated[TasksService, Depends(TasksService)]
+TasksLinkedServiceDep = Annotated[TaskLinkedService, Depends(TaskLinkedService)]
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
 
@@ -42,30 +45,51 @@ async def add_task(
     return EntityId(id=task_id)
 
 
-@router.patch("/{task_id}", dependencies=[has_access_dep])
+@router.patch("/{task_id}")
 async def edit_task(
     task_id: int,
     task: TaskEditModel,
     tasks_service: TasksServiceDep,
+    current_user_id: current_user_id_dep,
 ):
-    await tasks_service.edit_task(task_id, task)
+    await tasks_service.edit_task(current_user_id, task_id, task)
 
     return status.HTTP_200_OK
 
 
-@router.patch("/{task_id}/status_asignee", dependencies=[has_access_dep])
+@router.patch("/{task_id}/status_asignee")
 async def edit_task_asignee_status(
     task_id: int,
     asignee_status: TasksAsigneeStatus,
     tasks_service: TasksServiceDep,
+    current_user_id: current_user_id_dep,
 ):
-    await tasks_service.edit_status_asignee(task_id, asignee_status)
+    await tasks_service.edit_status_asignee(current_user_id, task_id, asignee_status)
 
     return status.HTTP_200_OK
 
 
-@router.delete("/{task_id}", dependencies=[has_role_dep(UserRoles.MANAGER)])
+@router.delete("/{task_id}/delete", dependencies=[has_role_dep(UserRoles.MANAGER)])
 async def delete_task(task_id: int, tasks_service: TasksServiceDep):
     await tasks_service.delete_task(task_id)
 
     return status.HTTP_200_OK
+
+
+@router.post("/link", dependencies=[has_access_dep])
+async def link_tasks(
+    payload: TaskLinkedAddModel, tasks_linked_service: TasksLinkedServiceDep
+):
+    await tasks_linked_service.link_tasks(payload)
+
+    return status.HTTP_200_OK
+
+
+@router.delete("/link", dependencies=[has_access_dep])
+async def delete_link(
+    payload: TaskLinkedAddModel, tasks_linked_service: TasksLinkedServiceDep
+):
+    is_deleted = await tasks_linked_service.delete_link(payload)
+
+    if is_deleted:
+        return status.HTTP_200_OK

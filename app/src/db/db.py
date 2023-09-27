@@ -48,6 +48,12 @@ class DBAdapter(Generic[TK]):
 
         return res.scalar_one_or_none()
 
+    async def find_by_multiple_ids(self, ids: list[int]) -> list[TK]:
+        stmt = select(self.model).where(self.model.id.in_(ids))
+        res: Result = await self.session.execute(stmt)
+
+        return [row.to_json() for row in res.scalars().all()]
+
     async def find_by_id_or_404(
         self, id: int, error_msg: str = DEFAULT_404_MESSAGE
     ) -> TK:
@@ -58,9 +64,9 @@ class DBAdapter(Generic[TK]):
 
         return res
 
-    async def add(self, data: dict) -> int:
-        data_with_timestamp = self._add_initial_timestamps(data)
-        stmt = insert(self.model).values(**data_with_timestamp).returning(self.model.id)
+    async def add(self, data: dict, use_timestamp: bool = True) -> int:
+        data = self._add_initial_timestamps(data) if use_timestamp else data
+        stmt = insert(self.model).values(**data).returning(self.model.id)
         res = await self.session.execute(stmt)
 
         return res.scalar_one()
@@ -71,14 +77,10 @@ class DBAdapter(Generic[TK]):
         await self.session.execute(stmt)
 
     async def delete_by_id(self, id: int) -> bool:
-        item = await self.find_by_id(id)
-        stmt = delete(self.model).where(self.model.id == id)
+        stmt = delete(self.model).where(self.model.id == id).returning(self.model.id)
+        res: Result = await self.session.execute(stmt)
 
-        if not item:
-            return False
-
-        await self.session.execute(stmt)
-        return True
+        return bool(res.scalar_one_or_none())
 
 
 """ prepare postgres connection """

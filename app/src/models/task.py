@@ -4,7 +4,7 @@ from typing import Optional
 from pydantic import BaseModel, Field
 
 
-class TaskModel(BaseModel):
+class TaskDisplayModel(BaseModel):
     id: int
     created_at: datetime
     updated_at: datetime
@@ -15,7 +15,25 @@ class TaskModel(BaseModel):
     author: int
     description: Optional[str]
     asignee: Optional[int]
-    # blocks: Optional[list[int]]
+
+
+class TaskDisplayModelWithLinks(TaskDisplayModel):
+    linked: Optional[list[TaskDisplayModel]]
+    # blocks: Optional[list[TaskDisplayModel]]
+    # blocked_by: Optional[list[TaskDisplayModel]]
+
+
+class TaskModel(BaseModel):
+    id: int
+    created_at: datetime
+    updated_at: datetime
+    task_type: str
+    status: str
+    priority_id: int
+    name: str
+    author_id: int
+    description: Optional[str]
+    asignee_id: Optional[int]
 
 
 class TasksAsigneeStatus(BaseModel):
