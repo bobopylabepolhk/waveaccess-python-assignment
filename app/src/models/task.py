@@ -14,7 +14,11 @@ class TaskDisplayModel(BaseModel):
 	author: int
 	description: Optional[str]
 	asignee: Optional[int]
-	# blocks: Optional[list[int]]
+
+class TaskDisplayModelWithLinks(TaskDisplayModel):
+	linked: Optional[list[TaskDisplayModel]]
+	# blocks: Optional[list[TaskDisplayModel]]
+	# blocked_by: Optional[list[TaskDisplayModel]]
 
 class TaskModel(BaseModel):
 	id: int

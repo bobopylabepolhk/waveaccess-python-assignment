@@ -2,11 +2,12 @@ from datetime import datetime
 from typing import Optional, Type
 
 from fastapi import HTTPException
+from db.task_linked import TaskLinked, TaskLinkedAdapter
 from db.task_history import TaskHistory, TaskHistoryAdapter
 from core.messages import NOT_FOUND_ASIGNEE_ID
 from db.users import Users
 from db.base import Base
-from core.constants import TaskPriority, TaskStatus, UserRoles
+from core.constants import TaskPriority, UserRoles
 from db.db import DBAdapter
 from models.task import TaskDisplayModel, TaskModel
 from sqlalchemy import ForeignKey, Result, select
@@ -25,7 +26,12 @@ class Tasks(Base):
 	status: Mapped[str]
 	task_type: Mapped[str]
 
-	children: Mapped['TaskHistory'] = relationship(backref='parent', passive_deletes=True)
+	history: Mapped['TaskHistory'] = relationship(backref='parent', passive_deletes=True)
+	linked: Mapped['TaskLinked'] = relationship(
+		backref='parent',
+		passive_deletes=True,
+		primaryjoin='Tasks.id == TaskLinked.task_id'
+	)
 
 	def to_json(self) -> TaskDisplayModel:
 		return TaskDisplayModel(
@@ -60,3 +66,9 @@ class TasksAdapter(DBAdapter):
 		await tasks_history.update_history(current_user_id, task_id, task)
 		await self.edit_by_id(task_id, data)
 
+	async def get_linked_tasks(self, task_id: int):
+		tasks_linked = TaskLinkedAdapter(self.session)
+		task_ids = await tasks_linked.get_linked_tasks_ids(task_id)
+		tasks: list[TaskDisplayModel] = await self.find_by_multiple_ids(task_ids)
+
+		return tasks
