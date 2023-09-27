@@ -109,3 +109,5 @@ class TasksService:
 
             if not is_deleted:
                 raise HTTPException(404, TASK_NOT_FOUND_BY_ID.format(id))
+
+            await c.adapter.commit()

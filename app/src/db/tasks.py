@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Optional, Type
 
 from fastapi import HTTPException
-from db.task_history import TaskHistoryAdapter
+from db.task_history import TaskHistory, TaskHistoryAdapter
 from core.messages import NOT_FOUND_ASIGNEE_ID
 from db.users import Users
 from db.base import Base
@@ -10,7 +10,7 @@ from core.constants import TaskPriority, TaskStatus, UserRoles
 from db.db import DBAdapter
 from models.task import TaskDisplayModel, TaskModel
 from sqlalchemy import ForeignKey, Result, select
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.exc import NoResultFound
 
 class Tasks(Base):
@@ -25,6 +25,7 @@ class Tasks(Base):
 	status: Mapped[str]
 	task_type: Mapped[str]
 
+	children: Mapped['TaskHistory'] = relationship(backref='parent', passive_deletes=True)
 
 	def to_json(self) -> TaskDisplayModel:
 		return TaskDisplayModel(

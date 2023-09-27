@@ -23,7 +23,7 @@ class TaskHistory(Base):
 	task_type: Mapped[str]
 
 	updated_by_id: Mapped[int] = mapped_column(ForeignKey('users.id'))
-	task_id: Mapped[int] = mapped_column(ForeignKey('tasks.id'))
+	task_id: Mapped[int] = mapped_column(ForeignKey('tasks.id', ondelete='CASCADE'))
 
 	def to_json(self) -> TaskHistoryModel:
 		return TaskHistoryModel(
