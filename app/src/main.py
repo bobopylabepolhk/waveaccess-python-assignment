@@ -1,7 +1,8 @@
 from fastapi import FastAPI
-from api import tasks, users, task_history
 
-app = FastAPI(title='bugtracker')
+from api import task_history, tasks, users
+
+app = FastAPI(title="bugtracker")
 
 app.include_router(tasks.router)
 app.include_router(users.router)

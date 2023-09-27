@@ -1,20 +1,31 @@
 from fastapi import HTTPException
+
 from core.constants import TaskPriority, TaskStatus, UserRoles
-from core.messages import TASK_INVALID_ASIGNEE_ROLE, TASK_INVALID_STATUS_CHAIN, TASK_INVALID_STATUS_IN_PROGRESS, TASK_NOT_FOUND_BY_ID, TASK_STATUS_DOES_NOT_EXIST
+from core.messages import (
+    TASK_INVALID_ASIGNEE_ROLE,
+    TASK_INVALID_STATUS_CHAIN,
+    TASK_INVALID_STATUS_IN_PROGRESS,
+    TASK_NOT_FOUND_BY_ID,
+    TASK_STATUS_DOES_NOT_EXIST,
+)
 from db.db import DBConnector
 from db.tasks import Tasks, TasksAdapter
-from models.task import TaskAddModel, TaskDisplayModel, TaskDisplayModelWithLinks, TaskEditModel, TaskModel, TasksAsigneeStatus
+from models.task import (
+    TaskAddModel,
+    TaskDisplayModel,
+    TaskDisplayModelWithLinks,
+    TaskEditModel,
+    TaskModel,
+    TasksAsigneeStatus,
+)
+
 
 class TasksService:
     def __init__(self):
         self.conn = DBConnector(TasksAdapter)
         self._status_chain = [e for e in TaskStatus]
-    
-    def _validate_task_status(
-            self, 
-            old_status: TaskStatus, 
-            new_status: TaskStatus
-        ):
+
+    def _validate_task_status(self, old_status: TaskStatus, new_status: TaskStatus):
         try:
             old_status_idx = self._status_chain.index(old_status)
             new_status_idx = self._status_chain.index(new_status)
@@ -22,18 +33,23 @@ class TasksService:
 
             if status_step > 1:
                 bug_found_flow = (
-                    old_status == TaskStatus.DEV_TEST or old_status == TaskStatus.TESTING
+                    old_status == TaskStatus.DEV_TEST
+                    or old_status == TaskStatus.TESTING
                 ) and new_status == TaskStatus.IN_PROGRESS
-                todo_or_wontfix = new_status == TaskStatus.TODO or new_status == TaskStatus.WONT_FIX
+                todo_or_wontfix = (
+                    new_status == TaskStatus.TODO or new_status == TaskStatus.WONT_FIX
+                )
 
                 if not bug_found_flow and not todo_or_wontfix:
-                    raise HTTPException(400, TASK_INVALID_STATUS_CHAIN.format(old_status, new_status))
+                    raise HTTPException(
+                        400, TASK_INVALID_STATUS_CHAIN.format(old_status, new_status)
+                    )
         except ValueError:
             raise HTTPException(400, TASK_STATUS_DOES_NOT_EXIST.format(new_status))
-    
+
     async def _validate_task_asignee(self, payload: TasksAsigneeStatus):
         task_status = TaskStatus[payload.status]
-        allowed_status_by_role = { 
+        allowed_status_by_role = {
             UserRoles.TEAM_LEAD: self._status_chain,
             UserRoles.DEV: [
                 TaskStatus.TODO,
@@ -41,14 +57,14 @@ class TasksService:
                 TaskStatus.CODE_REVIEW,
                 TaskStatus.DEV_TEST,
                 TaskStatus.DONE,
-                TaskStatus.WONT_FIX
+                TaskStatus.WONT_FIX,
             ],
             UserRoles.MANAGER: [],
             UserRoles.QA: [
                 TaskStatus.TODO,
                 TaskStatus.TESTING,
                 TaskStatus.DONE,
-                TaskStatus.WONT_FIX
+                TaskStatus.WONT_FIX,
             ],
         }
 
@@ -60,19 +76,19 @@ class TasksService:
                     raise HTTPException(400, TASK_INVALID_ASIGNEE_ROLE)
 
             elif task_status == TaskStatus.IN_PROGRESS:
-                raise HTTPException(400, TASK_INVALID_STATUS_IN_PROGRESS)        
+                raise HTTPException(400, TASK_INVALID_STATUS_IN_PROGRESS)
 
     async def get_tasks(self) -> list[TaskDisplayModel]:
         async with self.conn as c:
             tasks: list[TaskDisplayModel] = await c.adapter.find_all()
-            
+
             return tasks
-    
+
     async def get_task_by_id(self, id: int) -> TaskDisplayModelWithLinks | None:
         async with self.conn as c:
             task: Tasks = await c.adapter.find_by_id_or_404(id)
             linked: list[TaskDisplayModel] = await c.adapter.get_linked_tasks(id)
-            
+
             return TaskDisplayModelWithLinks(
                 id=task.id,
                 author=task.author_id,
@@ -84,7 +100,7 @@ class TasksService:
                 status=task.status,
                 task_type=task.task_type,
                 updated_at=task.updated_at,
-                linked=linked
+                linked=linked,
             )
 
     async def add_task(self, task: TaskAddModel) -> int:
@@ -93,25 +109,28 @@ class TasksService:
             data = task.model_dump(by_alias=True)
             id = await c.adapter.add(data)
             await c.adapter.commit()
-            
+
             return id
-    
+
     async def edit_task(self, current_user_id: int, id: int, payload: TaskEditModel):
-        async with self.conn as c:   
+        async with self.conn as c:
             task = await c.adapter.find_by_id_or_404(id)
-         
+
             data = payload.model_dump(by_alias=True)
             await c.adapter.edit_with_history(current_user_id, id, data, task)
             await c.adapter.commit()
 
-    async def edit_status_asignee(self, current_user_id: int, id: int, payload: TasksAsigneeStatus):
+    async def edit_status_asignee(
+        self, current_user_id: int, id: int, payload: TasksAsigneeStatus
+    ):
         async with self.conn as c:
             await self._validate_task_asignee(payload)
 
             task: TaskModel = await c.adapter.find_by_id_or_404(id)
-            
-            self._validate_task_status(TaskStatus[task.status], TaskStatus[payload.status])
 
+            self._validate_task_status(
+                TaskStatus[task.status], TaskStatus[payload.status]
+            )
             data = payload.model_dump(by_alias=True)
             await c.adapter.edit_with_history(current_user_id, id, data, task)
             await c.adapter.commit()
