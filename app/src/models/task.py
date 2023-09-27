@@ -16,16 +16,18 @@ class TaskModel(BaseModel):
 	asignee: Optional[int]
 	# blocks: Optional[list[int]]
 
-class TaskAddModel(BaseModel):
-	task_type: str
+class TasksAsigneeStatus(BaseModel):
+	asignee: Optional[int] = Field(serialization_alias='asignee_id')
 	status: str
+
+class TaskEditModel(BaseModel):
+	task_type: str
 	priority: int = Field(serialization_alias='priority_id')
 	name: str
 	author: int = Field(serialization_alias='author_id')
 	description: Optional[str] = None
-	asignee: Optional[int] = Field(serialization_alias='asignee_id')
 
-class TaskEditModel(TaskAddModel):
-	id: int
+class TaskAddModel(TaskEditModel, TasksAsigneeStatus):
+	pass
 
 

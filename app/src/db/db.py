@@ -1,8 +1,10 @@
 from datetime import datetime
 from typing import  Generic, Type, TypeVar
+from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy import delete, insert, select, update
 from sqlalchemy.engine import Result
+from core.messages import DEFAULT_404_MESSAGE
 from db.base import Base
 from core.settings import settings
 
@@ -41,6 +43,14 @@ class DBAdapter(Generic[TK]):
 		res: Result = await self.session.execute(stmt)
 	
 		return res.scalar_one_or_none()
+	
+	async def find_by_id_or_404(self, id: int, error_msg: str = DEFAULT_404_MESSAGE) -> TK:
+		res = await self.find_by_id(id)
+
+		if not res:
+			raise HTTPException(404, error_msg)
+		
+		return res
 
 	async def add(self, data: dict) -> int:
 		data_with_timestamp = self._add_initial_timestamps(data)
@@ -51,7 +61,7 @@ class DBAdapter(Generic[TK]):
 	
 	async def edit_by_id(self, id: int, data: dict):
 		data_with_timestamp = self._update_timestamp(data)
-		stmt = update(self.model).values(**data_with_timestamp).filter_by(id=id).returning(self.model.id)
+		stmt = update(self.model).values(**data_with_timestamp).filter_by(id=id)
 		await self.session.execute(stmt)
 	
 	async def delete_by_id(self, id: int) -> bool:

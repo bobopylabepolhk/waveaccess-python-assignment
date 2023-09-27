@@ -21,6 +21,5 @@ class UserRegisterModel(UserLoginModel):
 	role: Optional[int]
 
 class UserEditModel(BaseModel):
-	id: int
 	login: Optional[str]
 	role: Optional[int]

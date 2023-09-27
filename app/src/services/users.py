@@ -56,9 +56,8 @@ class UsersService:
 				UserDisplayModel(id=user_id, login=credentials.login, role=role)
 			)
 
-	async def edit_user(self, payload: UserEditModel):
+	async def edit_user(self, id: int, payload: UserEditModel):
 		async with self.conn as c:
-			id = await c.adapter.edit_by_id(payload.id, payload.model_dump(exclude={ 'id' }))
+			await c.adapter.edit_by_id(id, payload.model_dump(exclude={ 'id' }))
 			await c.adapter.commit()
-			
-			return id
+		

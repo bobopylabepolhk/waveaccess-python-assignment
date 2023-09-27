@@ -1,4 +1,5 @@
 INVALID_PAYLOAD = 'key {} is missing from payload!'
+DEFAULT_404_MESSAGE = 'entity not found!'
 
 TASK_INVALID_ASIGNEE_ROLE = 'status {} is not allowed with asignee role {}!'
 TASK_INVALID_STATUS_CHAIN = 'changing status from {} to {} is not allowed!'
