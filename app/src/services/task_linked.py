@@ -15,24 +15,29 @@ class TaskLinkedService:
 			if payload.task_id == payload.linked_id or duplicate:
 				raise HTTPException(400, TASK_LINK_WRONG_IDS.format(payload.task_id, payload.linked_id))
 	
+	def _inverse_linked_payload(self, payload: TaskLinkedAddModel) -> TaskLinkedAddModel:
+		return TaskLinkedAddModel(linked_id=payload.task_id, task_id=payload.linked_id)
+	
 	async def link_tasks(self, payload: TaskLinkedAddModel):
 		async with self.conn as c:
 			await self._validate_link(payload)
-			data = payload.model_dump()
+			inverse_payload = self._inverse_linked_payload(payload)
 			
-			id = await c.adapter.add(data, use_timestamp=False)
+			await c.adapter.add(payload.model_dump(), use_timestamp=False)
+			await c.adapter.add(inverse_payload.model_dump(), use_timestamp=False)
 			await c.adapter.commit()
-
-			return id
 		
-	async def delete_link(self, payload: TaskLinkedAddModel):
+	async def delete_link(self, payload: TaskLinkedAddModel) -> bool:
 		async with self.conn as c:
+			inverse_payload = self._inverse_linked_payload(payload)
 			link = await c.adapter.find_link(payload)
+			link_inverse = await c.adapter.find_link(inverse_payload)
 
-			if not link:
-				return False
+			if link and link_inverse:
+				await c.adapter.delete_by_id(link.id)
+				await c.adapter.delete_by_id(link_inverse.id)
+				await c.adapter.commit()
 
-			is_deleted = await c.adapter.delete_by_id(link.id)
-			await c.adapter.commit()
-
-			return is_deleted
+				return True
+			
+			return False			

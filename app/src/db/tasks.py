@@ -68,7 +68,7 @@ class TasksAdapter(DBAdapter):
 
 	async def get_linked_tasks(self, task_id: int):
 		tasks_linked = TaskLinkedAdapter(self.session)
-		task_ids = await tasks_linked.get_linked_tasks_ids(task_id) 
+		task_ids = await tasks_linked.get_linked_tasks_ids(task_id)
 		tasks: list[TaskDisplayModel] = await self.find_by_multiple_ids(task_ids)
 
 		return tasks

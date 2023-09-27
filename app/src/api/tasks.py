@@ -1,6 +1,8 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends, status
 from api.dependencies import has_access_dep, has_role_dep, current_user_id_dep
+from models.task_linked import TaskLinkedAddModel
+from services.task_linked import TaskLinkedService
 
 from core.constants import UserRoles
 from models.response import EntityId
@@ -9,6 +11,7 @@ from models.task import TaskAddModel, TaskEditModel, TasksAsigneeStatus
 from services.tasks import TasksService
 
 TasksServiceDep = Annotated[TasksService, Depends(TasksService)]
+TasksLinkedServiceDep = Annotated[TaskLinkedService, Depends(TaskLinkedService)]
 
 router = APIRouter(prefix='/tasks', tags=['tasks'])
 
@@ -60,7 +63,7 @@ async def edit_task_asignee_status(
 
     return status.HTTP_200_OK
 
-@router.delete('/{task_id}', dependencies=[has_role_dep(UserRoles.MANAGER)])
+@router.delete('/{task_id}/delete', dependencies=[has_role_dep(UserRoles.MANAGER)])
 async def delete_task(
     task_id: int,
     tasks_service: TasksServiceDep
@@ -68,3 +71,22 @@ async def delete_task(
     await tasks_service.delete_task(task_id)
 
     return status.HTTP_200_OK
+
+@router.post('/link', dependencies=[has_access_dep])
+async def link_tasks(
+    payload: TaskLinkedAddModel,
+    tasks_linked_service: TasksLinkedServiceDep
+):
+    await tasks_linked_service.link_tasks(payload)
+
+    return status.HTTP_200_OK
+
+@router.delete('/link', dependencies=[has_access_dep])
+async def delete_link(
+    payload: TaskLinkedAddModel,
+    tasks_linked_service: TasksLinkedServiceDep
+):
+    is_deleted = await tasks_linked_service.delete_link(payload)
+
+    if is_deleted:
+        return status.HTTP_200_OK
