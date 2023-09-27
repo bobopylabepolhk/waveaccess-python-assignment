@@ -1,9 +1,9 @@
 from fastapi import HTTPException
-from core.constants import TaskStatus, UserRoles
+from core.constants import TaskPriority, TaskStatus, UserRoles
 from core.messages import TASK_INVALID_ASIGNEE_ROLE, TASK_INVALID_STATUS_CHAIN, TASK_INVALID_STATUS_IN_PROGRESS, TASK_NOT_FOUND_BY_ID, TASK_STATUS_DOES_NOT_EXIST
 from db.db import DBConnector
-from db.tasks import TasksAdapter
-from models.task import TaskAddModel, TaskDisplayModel, TaskEditModel, TaskModel, TasksAsigneeStatus
+from db.tasks import Tasks, TasksAdapter
+from models.task import TaskAddModel, TaskDisplayModel, TaskDisplayModelWithLinks, TaskEditModel, TaskModel, TasksAsigneeStatus
 
 class TasksService:
     def __init__(self):
@@ -68,11 +68,24 @@ class TasksService:
             
             return tasks
     
-    async def get_task_by_id(self, id: int) -> TaskModel | None:
+    async def get_task_by_id(self, id: int) -> TaskDisplayModelWithLinks | None:
         async with self.conn as c:
-            task: TaskModel = await c.adapter.find_by_id_or_404(id)
+            task: Tasks = await c.adapter.find_by_id_or_404(id)
+            linked: list[TaskDisplayModel] = await c.adapter.get_linked_tasks(id)
             
-            return task
+            return TaskDisplayModelWithLinks(
+                id=task.id,
+                author=task.author_id,
+                created_at=task.created_at,
+                asignee=task.asignee_id,
+                description=task.description,
+                name=task.name,
+                priority=TaskPriority(task.priority_id).name,
+                status=task.status,
+                task_type=task.task_type,
+                updated_at=task.updated_at,
+                linked=linked
+            )
 
     async def add_task(self, task: TaskAddModel) -> int:
         async with self.conn as c:
