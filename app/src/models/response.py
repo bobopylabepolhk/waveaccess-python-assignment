@@ -2,7 +2,8 @@ from pydantic import BaseModel
 
 
 class EntityId(BaseModel):
-	id: int
+    id: int
+
 
 class JWTResponse(BaseModel):
-	access_token: str
+    access_token: str

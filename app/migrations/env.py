@@ -1,11 +1,10 @@
 import asyncio
 from logging.config import fileConfig
 
+from alembic import context
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
-
-from alembic import context
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -18,15 +17,16 @@ if config.config_file_name is not None:
 
 # >> alembic.ini: prepend_sys_path already set to .src
 from dotenv import load_dotenv
-from db.base import Base # pyright: ignore
-from db import * # pyright: ignore
-from core.settings import Settings # pyright: ignore
+
+from core.settings import Settings
+from db import *
+from db.base import Base
 
 load_dotenv()
 settings = Settings()
 
 target_metadata = Base.metadata
-config.set_main_option('sqlalchemy.url', settings.get_pg_conn_str(True))
+config.set_main_option("sqlalchemy.url", settings.get_pg_conn_str(True))
 
 
 def run_migrations_offline() -> None:
