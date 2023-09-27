@@ -1,6 +1,6 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends, status
-from api.dependencies import has_access_dep, has_role_dep
+from api.dependencies import has_access_dep, has_role_dep, current_user_id_dep
 from core.constants import UserRoles
 from models.response import EntityId
 from models.task import TaskAddModel, TaskEditModel, TasksAsigneeStatus
@@ -37,23 +37,25 @@ async def add_task(
 
     return EntityId(id=task_id)
 
-@router.patch('/{task_id}', dependencies=[has_access_dep])
+@router.patch('/{task_id}')
 async def edit_task(
     task_id: int,
     task: TaskEditModel,
     tasks_service: TasksServiceDep,
+    current_user_id: current_user_id_dep
 ):
-    await tasks_service.edit_task(task_id, task)
+    await tasks_service.edit_task(current_user_id, task_id, task)
 
     return status.HTTP_200_OK
 
-@router.patch('/{task_id}/status_asignee', dependencies=[has_access_dep])
+@router.patch('/{task_id}/status_asignee')
 async def edit_task_asignee_status(
     task_id: int,
     asignee_status: TasksAsigneeStatus,
     tasks_service: TasksServiceDep,
+    current_user_id: current_user_id_dep
 ):
-    await tasks_service.edit_status_asignee(task_id, asignee_status)
+    await tasks_service.edit_status_asignee(current_user_id, task_id, asignee_status)
 
     return status.HTTP_200_OK
 

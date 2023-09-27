@@ -2,12 +2,13 @@ from datetime import datetime
 from typing import Optional, Type
 
 from fastapi import HTTPException
+from db.task_history import TaskHistoryAdapter
 from core.messages import NOT_FOUND_ASIGNEE_ID
 from db.users import Users
 from db.base import Base
 from core.constants import TaskPriority, TaskStatus, UserRoles
 from db.db import DBAdapter
-from models.task import TaskAddModel, TaskModel
+from models.task import TaskDisplayModel, TaskModel
 from sqlalchemy import ForeignKey, Result, select
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.exc import NoResultFound
@@ -18,15 +19,15 @@ class Tasks(Base):
 	updated_at: Mapped[datetime]
 	description: Mapped[Optional[str]]
 
-	asignee_id: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"))
-	author_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+	asignee_id: Mapped[Optional[int]] = mapped_column(ForeignKey('users.id'))
+	author_id: Mapped[int] = mapped_column(ForeignKey('users.id'))
 	priority_id: Mapped[int]
-	status: Mapped[Optional[str]]
+	status: Mapped[str]
 	task_type: Mapped[str]
 
 
-	def to_json(self) -> TaskModel:
-		return TaskModel(
+	def to_json(self) -> TaskDisplayModel:
+		return TaskDisplayModel(
 			id=self.id,
 			name=self.name,
 			asignee=self.asignee_id,
@@ -35,7 +36,7 @@ class Tasks(Base):
 			updated_at=self.updated_at,
 			description=self.description,
 			priority=TaskPriority(self.priority_id).name,
-			status=TaskStatus(self.status).name,
+			status=self.status,
 			task_type=self.task_type,
 		)
 
@@ -52,6 +53,9 @@ class TasksAdapter(DBAdapter):
 		except NoResultFound: 
 			raise HTTPException(404, NOT_FOUND_ASIGNEE_ID.format(asignee_id))
 	
-	#async def edit_task_update_history(self, task: TaskAddModel):
-			
+	async def edit_with_history(self, current_user_id: int, task_id: int, data: dict, task: TaskModel):
+		tasks_history = TaskHistoryAdapter(self.session)
+
+		await tasks_history.update_history(current_user_id, task_id, task)
+		await self.edit_by_id(task_id, data)
 

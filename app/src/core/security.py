@@ -28,25 +28,33 @@ def create_jwt(payload: dict, expires_in: int):
 
 security = HTTPBearer()
 
-async def has_access(credentials: HTTPAuthorizationCredentials=Depends(security)):
-    token = credentials.credentials
+def parse_jwt_payload(token: str):
+    raw_payload = jwt.decode(
+        token,
+        key=settings.jwt_secret,
+        algorithms=[settings.jwt_algo]
+    )
+    user = json.loads(raw_payload['sub'].replace("'", '"'))
 
+    return user
+
+async def has_access(credentials: HTTPAuthorizationCredentials=Depends(security)):
     try:
-        return jwt.decode(
-        	token,
-			key=settings.jwt_secret,
-        	algorithms=[settings.jwt_algo]
-        )
+        return parse_jwt_payload(credentials.credentials)
     except JWTError:
         raise HTTPException(401, AUTHORIZATION_ERROR)
     
 def has_access_by_role(target_role: UserRoles):
     async def func(credentials: HTTPAuthorizationCredentials=Depends(security)):
-        raw_jwt = await has_access(credentials=credentials)
-        user = json.loads(raw_jwt['sub'].replace("'", '"'))
+        user = await has_access(credentials=credentials)
         role = user.get('role')
 
         if not role or UserRoles[role] != target_role:
             raise HTTPException(403, WRONG_ROLE.format(role, target_role.name))
 
     return func
+
+async def get_current_user_id(credentials: HTTPAuthorizationCredentials=Depends(security)) -> int:
+    user = await has_access(credentials)
+
+    return user.get('id')
