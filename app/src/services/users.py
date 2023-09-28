@@ -11,24 +11,21 @@ from models.user import (
     UserEditModel,
     UserLoginModel,
     UserRegisterModel,
+    UserTokenModel,
 )
+from services.pagination import PaginationService
 
 
 class UsersService:
     def __init__(self):
         self.conn = DBConnector(UsersAdapter)
+        self.paginator = PaginationService(UserDisplayModel, self.conn)
 
-    def _create_token(self, user: UserDisplayModel) -> str:
+    def _create_token(self, user: UserTokenModel) -> str:
         payload = user.model_dump()
         jwt = create_jwt(payload, settings.jwt_access_lifespan_minutes)
 
         return jwt
-
-    async def get_users(self) -> UserDisplayModel:
-        async with self.conn as c:
-            users = await c.adapter.find_all()
-
-            return users
 
     async def login(self, credentials: UserLoginModel) -> str:
         async with self.conn as c:
@@ -40,7 +37,7 @@ class UsersService:
             role = UserRoles(user.role).name if user.role else None
 
             return self._create_token(
-                UserDisplayModel(id=user.id, login=user.login, role=role)
+                UserTokenModel(id=user.id, login=user.login, role=role)
             )
 
     async def register(self, credentials: UserRegisterModel) -> str:
@@ -57,7 +54,7 @@ class UsersService:
             role = UserRoles(credentials.role).name if credentials.role else None
 
             return self._create_token(
-                UserDisplayModel(id=user_id, login=credentials.login, role=role)
+                UserTokenModel(id=user_id, login=credentials.login, role=role)
             )
 
     async def edit_user(self, id: int, payload: UserEditModel):

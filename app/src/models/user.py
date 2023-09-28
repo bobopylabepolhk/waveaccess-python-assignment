@@ -8,13 +8,13 @@ class UserDisplayModel(BaseModel):
     id: int
     login: str
     role: Optional[str]
+    created_at: datetime
+    updated_at: datetime
 
 
 class UserModel(UserDisplayModel):
     password: str
     role: int
-    created_at: datetime
-    updated_at: datetime
 
 
 class UserLoginModel(BaseModel):
@@ -24,6 +24,12 @@ class UserLoginModel(BaseModel):
 
 class UserRegisterModel(UserLoginModel):
     role: Optional[int]
+
+
+class UserTokenModel(BaseModel):
+    id: int
+    login: str
+    role: str
 
 
 class UserEditModel(BaseModel):

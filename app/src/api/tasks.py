@@ -1,13 +1,19 @@
-from typing import Annotated
+from typing import Annotated, Optional
 
 from fastapi import APIRouter, Depends, status
 
 from api.dependencies import current_user_id_dep, has_access_dep, has_role_dep
-from core.constants import UserRoles
+from core.constants import (
+    DEFAULT_PER_PAGE,
+    DEFAULT_SORT_KEY,
+    DEFAULT_SORT_ORDER,
+    SortOrder,
+    UserRoles,
+)
+from models.pagination import PaginationResponseModel
 from models.response import EntityId
 from models.task import (
     TaskAddModel,
-    TaskDisplayModel,
     TaskDisplayModelWithLinks,
     TaskEditModel,
     TasksAsigneeStatus,
@@ -24,11 +30,17 @@ TasksLinkedServiceDep = Annotated[TaskLinkedService, Depends(TaskLinkedService)]
 router = APIRouter(prefix="/tasks", tags=["tasks"])
 
 
-@router.get("/", dependencies=[has_access_dep], response_model=list[TaskDisplayModel])
+@router.get("/", dependencies=[has_access_dep], response_model=PaginationResponseModel)
 async def get_tasks(
     tasks_service: TasksServiceDep,
+    sort: str = DEFAULT_SORT_KEY,
+    page: int = 1,
+    per_page: int = DEFAULT_PER_PAGE,
+    sort_order: Optional[SortOrder] = DEFAULT_SORT_ORDER,
 ):
-    tasks = await tasks_service.get_tasks()
+    tasks = await tasks_service.paginator.get_paginated(
+        sort, sort_order, per_page, page
+    )
 
     return tasks
 
