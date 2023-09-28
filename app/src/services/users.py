@@ -24,7 +24,7 @@ class UsersService:
 
         return jwt
 
-    async def get_users(self):
+    async def get_users(self) -> UserDisplayModel:
         async with self.conn as c:
             users = await c.adapter.find_all()
 
@@ -62,5 +62,7 @@ class UsersService:
 
     async def edit_user(self, id: int, payload: UserEditModel):
         async with self.conn as c:
-            await c.adapter.edit_by_id(id, payload.model_dump(exclude={"id"}))
+            id = await c.adapter.edit_by_id(id, payload.model_dump(exclude={"id"}))
             await c.adapter.commit()
+
+            return id

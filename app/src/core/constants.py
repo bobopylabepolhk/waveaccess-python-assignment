@@ -10,6 +10,11 @@ class TaskPriority(IntEnum):
     LOW = 1
 
 
+class TaskType(str, Enum):
+    BUG = "bug"
+    TASK = "task"
+
+
 class TaskStatus(str, Enum):
     TODO = "To do"
     IN_PROGRESS = "In progress"

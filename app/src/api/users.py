@@ -1,11 +1,16 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends
 
 from api.dependencies import has_role_dep
 from core.constants import UserRoles
-from models.response import JWTResponse
-from models.user import UserEditModel, UserLoginModel, UserRegisterModel
+from models.response import EntityId, JWTResponse
+from models.user import (
+    UserDisplayModel,
+    UserEditModel,
+    UserLoginModel,
+    UserRegisterModel,
+)
 from services.users import UsersService
 
 UsersServiceDep = Annotated[UsersService, Depends(UsersService)]
@@ -16,31 +21,36 @@ router = APIRouter(
 )
 
 
-@router.get("/")
+@router.get("/", response_model=list[UserDisplayModel])
 async def get_users(users_service: UsersServiceDep):
     tasks = await users_service.get_users()
 
     return tasks
 
 
-@router.post("/login")
+@router.post("/login", response_model=JWTResponse)
 async def login(credentials: UserLoginModel, users_service: UsersServiceDep):
     token = await users_service.login(credentials)
 
     return JWTResponse(access_token=token)
 
 
-@router.post("/register")
+@router.post("/register", response_model=JWTResponse)
 async def register(credentials: UserRegisterModel, users_service: UsersServiceDep):
     token = await users_service.register(credentials)
 
     return JWTResponse(access_token=token)
 
 
-@router.patch("/{user_id}", dependencies=[has_role_dep(UserRoles.MANAGER)])
+@router.patch(
+    "/{user_id}",
+    dependencies=[has_role_dep(UserRoles.MANAGER)],
+    response_model=EntityId,
+    summary="Edit user login or role. Requires role MANAGER",
+)
 async def edit_user(
     user_id: int, payload: UserEditModel, users_service: UsersServiceDep
 ):
-    await users_service.edit_user(user_id, payload)
+    id = await users_service.edit_user(user_id, payload)
 
-    return status.HTTP_200_OK
+    return EntityId(id=id)
