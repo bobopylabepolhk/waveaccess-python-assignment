@@ -1,4 +1,3 @@
-INVALID_PAYLOAD = "key {} is missing from payload!"
 DEFAULT_404_MESSAGE = "entity not found!"
 
 TASK_INVALID_ASIGNEE_ROLE = "status {} is not allowed with asignee role {}!"
@@ -20,3 +19,5 @@ AUTHORIZATION_ERROR = (
 WRONG_ROLE = "access not allowed with role {}. necessary role: {}"
 
 NOT_FOUND_ASIGNEE_ID = "asigned user with id == {} not found!"
+
+INVALID_SORT_PARAM = "sort param {} is invalid! available sort params: {}"

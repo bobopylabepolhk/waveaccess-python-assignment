@@ -1,21 +1,24 @@
 from datetime import datetime
-from typing import Generic, Type, TypeVar
+from math import ceil
+from typing import Generic, Tuple, Type, TypeVar
 
 from fastapi import HTTPException
-from sqlalchemy import delete, insert, select, update
+from sqlalchemy import Select, asc, delete, desc, func, insert, select, update
 from sqlalchemy.engine import Result
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
+from core.constants import SortOrder
 from core.messages import DEFAULT_404_MESSAGE
 from core.settings import settings
 from db.base import Base
+from models.pagination import PaginationResponseModel
 
 """ ORM Adapter """
 
-TK = TypeVar("TK")
+Model = TypeVar("Model")
 
 
-class DBAdapter(Generic[TK]):
+class DBAdapter(Generic[Model]):
     model: Type[Base]
 
     def __init__(self, session: AsyncSession):
@@ -33,22 +36,56 @@ class DBAdapter(Generic[TK]):
 
         return {**data, "updated_at": updated_at}
 
+    async def _count_total_items(self, query: Select[Tuple[Base]]) -> int | None:
+        stmt = query.with_only_columns(func.count(self.model.id)).order_by(None)
+        res: Result = await self.session.execute(stmt)
+
+        return res.scalar()
+
     async def commit(self):
         await self.session.commit()
 
-    async def find_all(self) -> list[TK]:
+    async def find_all(self) -> list[Model]:
         stmt = select(self.model)
         res: Result = await self.session.execute(stmt)
 
         return [row.to_json() for row in res.scalars().all()]
 
-    async def find_by_id(self, id: int) -> TK | None:
+    async def find_all_with_sort(self, sort: str, sort_order: SortOrder):
+        order = asc if sort_order == SortOrder.ASC else desc
+        stmt = select(self.model).order_by(order(sort))
+        res: Result = await self.session.execute(stmt)
+
+        return [row.to_json() for row in res.scalars().all()]
+
+    async def find_all_with_pagination(
+        self, sort: str, sort_order: SortOrder, per_page: int, page: int
+    ) -> PaginationResponseModel:
+        order = asc if sort_order == SortOrder.ASC else desc
+        limit = per_page * page
+        offset = (page - 1) * per_page
+
+        stmt = select(self.model).order_by(order(sort)).limit(limit).offset(offset)
+        total_items = await self._count_total_items(stmt)
+        total_pages = ceil(total_items / per_page)
+        res: Result = await self.session.execute(stmt)
+        data = [row.to_json() for row in res.scalars().all()]
+
+        return PaginationResponseModel(
+            data=data,
+            page=page,
+            per_page=per_page,
+            total_pages=total_pages,
+            total_items=total_items,
+        )
+
+    async def find_by_id(self, id: int) -> Model | None:
         stmt = select(self.model).where(self.model.id == id)
         res: Result = await self.session.execute(stmt)
 
         return res.scalar_one_or_none()
 
-    async def find_by_multiple_ids(self, ids: list[int]) -> list[TK]:
+    async def find_by_multiple_ids(self, ids: list[int]) -> list[Model]:
         stmt = select(self.model).where(self.model.id.in_(ids))
         res: Result = await self.session.execute(stmt)
 
@@ -56,7 +93,7 @@ class DBAdapter(Generic[TK]):
 
     async def find_by_id_or_404(
         self, id: int, error_msg: str = DEFAULT_404_MESSAGE
-    ) -> TK:
+    ) -> Model:
         res = await self.find_by_id(id)
 
         if not res:
@@ -88,11 +125,11 @@ class DBAdapter(Generic[TK]):
 engine = create_async_engine(settings.get_pg_conn_str())
 get_session = async_sessionmaker(engine, expire_on_commit=False)
 
-T = TypeVar("T")
+Adapter = TypeVar("Adapter")
 
 
-class DBConnector(Generic[T]):
-    def __init__(self, adapter: Type[T]):
+class DBConnector(Generic[Adapter]):
+    def __init__(self, adapter: Type[Adapter]):
         self._adapter = adapter
 
     async def __aenter__(self):

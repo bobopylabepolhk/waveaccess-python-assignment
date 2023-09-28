@@ -18,11 +18,13 @@ from models.task import (
     TaskModel,
     TasksAsigneeStatus,
 )
+from services.pagination import PaginationService
 
 
 class TasksService:
     def __init__(self):
         self.conn = DBConnector(TasksAdapter)
+        self.paginator = PaginationService(TaskDisplayModel, self.conn)
         self._status_chain = [e for e in TaskStatus]
 
     def _validate_task_status(self, old_status: TaskStatus, new_status: TaskStatus):
@@ -48,7 +50,7 @@ class TasksService:
             raise HTTPException(400, TASK_STATUS_DOES_NOT_EXIST.format(new_status))
 
     async def _validate_task_asignee(self, payload: TasksAsigneeStatus):
-        task_status = TaskStatus[payload.status]
+        task_status = payload.status
         allowed_status_by_role = {
             UserRoles.TEAM_LEAD: self._status_chain,
             UserRoles.DEV: [
@@ -73,16 +75,12 @@ class TasksService:
                 asignee_role = await c.adapter.get_asignee_role(payload.asignee)
 
                 if task_status not in allowed_status_by_role[asignee_role]:
-                    raise HTTPException(400, TASK_INVALID_ASIGNEE_ROLE)
+                    raise HTTPException(
+                        400, TASK_INVALID_ASIGNEE_ROLE.format(task_status, asignee_role)
+                    )
 
             elif task_status == TaskStatus.IN_PROGRESS:
                 raise HTTPException(400, TASK_INVALID_STATUS_IN_PROGRESS)
-
-    async def get_tasks(self) -> list[TaskDisplayModel]:
-        async with self.conn as c:
-            tasks: list[TaskDisplayModel] = await c.adapter.find_all()
-
-            return tasks
 
     async def get_task_by_id(self, id: int) -> TaskDisplayModelWithLinks | None:
         async with self.conn as c:

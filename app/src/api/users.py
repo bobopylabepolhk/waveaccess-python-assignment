@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 
 from api.dependencies import has_role_dep
-from core.constants import UserRoles
+from core.constants import DEFAULT_SORT_KEY, DEFAULT_SORT_ORDER, SortOrder, UserRoles
 from models.response import EntityId, JWTResponse
 from models.user import (
     UserDisplayModel,
@@ -22,8 +22,12 @@ router = APIRouter(
 
 
 @router.get("/", response_model=list[UserDisplayModel])
-async def get_users(users_service: UsersServiceDep):
-    tasks = await users_service.get_users()
+async def get_users(
+    users_service: UsersServiceDep,
+    sort: str = DEFAULT_SORT_KEY,
+    sort_order: SortOrder | None = DEFAULT_SORT_ORDER,
+):
+    tasks = await users_service.paginator.get_sorted(sort, sort_order)
 
     return tasks
 

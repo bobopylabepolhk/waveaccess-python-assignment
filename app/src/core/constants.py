@@ -1,6 +1,6 @@
 from enum import Enum, IntEnum
 
-""" enums for TaskModel """
+""" TaskModels """
 
 
 class TaskPriority(IntEnum):
@@ -25,7 +25,7 @@ class TaskStatus(str, Enum):
     WONT_FIX = "Wontfix"
 
 
-""" enums for UserModel """
+""" UserModels """
 
 
 class UserRoles(IntEnum):
@@ -33,3 +33,17 @@ class UserRoles(IntEnum):
     DEV = 2
     MANAGER = 3
     QA = 4
+
+
+""" PaginationModels """
+
+
+class SortOrder(str, Enum):
+    ASC = "asc"
+    DESC = "desc"
+
+
+DEFAULT_PER_PAGE = 5
+DEFAULT_SORT_KEY = "created_at"
+DEFAULT_SORT_ORDER = SortOrder.DESC
+MAX_PER_PAGE = 15

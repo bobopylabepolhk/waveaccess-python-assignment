@@ -19,7 +19,11 @@ class Users(Base):
 
     def to_json(self) -> UserDisplayModel:
         return UserDisplayModel(
-            id=self.id, login=self.login, role=UserRoles(self.role).name
+            id=self.id,
+            login=self.login,
+            role=UserRoles(self.role).name,
+            created_at=self.created_at,
+            updated_at=self.updated_at,
         )
 
 
