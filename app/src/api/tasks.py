@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Optional
 
 from fastapi import APIRouter, Depends, status
 
@@ -36,7 +36,7 @@ async def get_tasks(
     sort: str = DEFAULT_SORT_KEY,
     page: int = 1,
     per_page: int = DEFAULT_PER_PAGE,
-    sort_order: SortOrder | None = DEFAULT_SORT_ORDER,
+    sort_order: Optional[SortOrder] = DEFAULT_SORT_ORDER,
 ):
     tasks = await tasks_service.paginator.get_paginated(
         sort, sort_order, per_page, page

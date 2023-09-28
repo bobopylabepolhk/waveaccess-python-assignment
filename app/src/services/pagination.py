@@ -1,3 +1,5 @@
+from typing import Optional
+
 from fastapi import HTTPException
 from pydantic import BaseModel
 
@@ -12,8 +14,8 @@ class PaginationService:
         self,
         model: BaseModel,
         connection: DBConnector,
-        default_sort_key: str | None = None,
-        exclude_sort_keys: list[str] | None = None,
+        default_sort_key: Optional[str] = None,
+        exclude_sort_keys: Optional[list[str]] = None,
     ):
         self.conn = connection
         self.default_sort_key = default_sort_key
@@ -35,9 +37,7 @@ class PaginationService:
     async def get_sorted(self, sort: str, sort_order: SortOrder):
         self._validate_sort_key(sort)
         async with self.conn as c:
-            items_sorted: list[self.model] = await c.adapter.find_all_with_sort(
-                sort, sort_order
-            )
+            items_sorted: list[self.model] = await c.adapter.find_all(sort, sort_order)
 
             return items_sorted
 

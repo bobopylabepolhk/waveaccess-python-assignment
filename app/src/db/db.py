@@ -1,6 +1,6 @@
 from datetime import datetime
 from math import ceil
-from typing import Generic, Tuple, Type, TypeVar
+from typing import Generic, Optional, Tuple, Type, TypeVar
 
 from fastapi import HTTPException
 from sqlalchemy import Select, asc, delete, desc, func, insert, select, update
@@ -45,15 +45,13 @@ class DBAdapter(Generic[Model]):
     async def commit(self):
         await self.session.commit()
 
-    async def find_all(self) -> list[Model]:
+    async def find_all(
+        self, sort: Optional[str], sort_order: Optional[SortOrder]
+    ) -> list[Model]:
         stmt = select(self.model)
-        res: Result = await self.session.execute(stmt)
-
-        return [row.to_json() for row in res.scalars().all()]
-
-    async def find_all_with_sort(self, sort: str, sort_order: SortOrder):
-        order = asc if sort_order == SortOrder.ASC else desc
-        stmt = select(self.model).order_by(order(sort))
+        if sort:
+            order = asc if sort_order == SortOrder.ASC else desc
+            stmt = stmt.order_by(order(sort))
         res: Result = await self.session.execute(stmt)
 
         return [row.to_json() for row in res.scalars().all()]

@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Optional
 
 from fastapi import APIRouter, Depends
 
@@ -25,7 +25,7 @@ router = APIRouter(
 async def get_users(
     users_service: UsersServiceDep,
     sort: str = DEFAULT_SORT_KEY,
-    sort_order: SortOrder | None = DEFAULT_SORT_ORDER,
+    sort_order: Optional[SortOrder] = DEFAULT_SORT_ORDER,
 ):
     tasks = await users_service.paginator.get_sorted(sort, sort_order)
 
