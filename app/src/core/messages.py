@@ -3,6 +3,7 @@ DEFAULT_404_MESSAGE = "entity not found!"
 TASK_INVALID_ASIGNEE_ROLE = "status {} is not allowed with asignee role {}!"
 TASK_INVALID_STATUS_CHAIN = "changing status from {} to {} is not allowed!"
 TASK_INVALID_STATUS_IN_PROGRESS = "status IN_PROGRESS cannot be used with empty asignee"
+TASK_INVALID_PRIORITY = "priority with id == {} does not exist!"
 TASK_STATUS_DOES_NOT_EXIST = "status {} does not exist!"
 TASK_NOT_FOUND_BY_ID = "task with id == {} does not exist!"
 

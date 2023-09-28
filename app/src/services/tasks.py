@@ -3,6 +3,7 @@ from fastapi import HTTPException
 from core.constants import TaskPriority, TaskStatus, UserRoles
 from core.messages import (
     TASK_INVALID_ASIGNEE_ROLE,
+    TASK_INVALID_PRIORITY,
     TASK_INVALID_STATUS_CHAIN,
     TASK_INVALID_STATUS_IN_PROGRESS,
     TASK_NOT_FOUND_BY_ID,
@@ -19,6 +20,7 @@ from models.task import (
     TasksAsigneeStatus,
 )
 from services.pagination import PaginationService
+from utils.enum_to_dict import enum_to_dict
 
 
 class TasksService:
@@ -76,11 +78,19 @@ class TasksService:
 
                 if task_status not in allowed_status_by_role[asignee_role]:
                     raise HTTPException(
-                        400, TASK_INVALID_ASIGNEE_ROLE.format(task_status, asignee_role)
+                        400,
+                        TASK_INVALID_ASIGNEE_ROLE.format(
+                            task_status, UserRoles(asignee_role).name
+                        ),
                     )
 
             elif task_status == TaskStatus.IN_PROGRESS:
                 raise HTTPException(400, TASK_INVALID_STATUS_IN_PROGRESS)
+
+    def _validate_task_priority(self, payload: TaskEditModel):
+        avaliable_priorities = enum_to_dict(TaskPriority).values()
+        if payload.priority not in avaliable_priorities:
+            raise HTTPException(400, TASK_INVALID_PRIORITY.format(payload.priority))
 
     async def get_task_by_id(self, id: int) -> TaskDisplayModelWithLinks | None:
         async with self.conn as c:
@@ -104,6 +114,7 @@ class TasksService:
     async def add_task(self, task: TaskAddModel) -> int:
         async with self.conn as c:
             await self._validate_task_asignee(task)
+            self._validate_task_priority(task)
             data = task.model_dump(by_alias=True)
             id = await c.adapter.add(data)
             await c.adapter.commit()
@@ -112,6 +123,7 @@ class TasksService:
 
     async def edit_task(self, current_user_id: int, id: int, payload: TaskEditModel):
         async with self.conn as c:
+            self._validate_task_priority(payload)
             task = await c.adapter.find_by_id_or_404(id)
 
             data = payload.model_dump(by_alias=True)
