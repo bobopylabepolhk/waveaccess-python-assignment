@@ -9,3 +9,5 @@ RUN poetry config virtualenvs.create false
 RUN poetry install --no-cache --without test,dev
 
 COPY /src /code/
+
+CMD uvicorn main:app --reload --host 0.0.0.0 --port ${FASTAPI_PORT}
