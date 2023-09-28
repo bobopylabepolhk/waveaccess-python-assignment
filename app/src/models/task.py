@@ -3,6 +3,8 @@ from typing import Optional
 
 from pydantic import BaseModel, Field
 
+from core.constants import TaskStatus, TaskType
+
 
 class TaskDisplayModel(BaseModel):
     id: int
@@ -27,8 +29,8 @@ class TaskModel(BaseModel):
     id: int
     created_at: datetime
     updated_at: datetime
-    task_type: str
-    status: str
+    task_type: TaskType
+    status: TaskStatus
     priority_id: int
     name: str
     author_id: int
@@ -38,11 +40,11 @@ class TaskModel(BaseModel):
 
 class TasksAsigneeStatus(BaseModel):
     asignee: Optional[int] = Field(serialization_alias="asignee_id")
-    status: str
+    status: TaskStatus
 
 
 class TaskEditModel(BaseModel):
-    task_type: str
+    task_type: TaskType
     priority: int = Field(serialization_alias="priority_id")
     name: str
     author: int = Field(serialization_alias="author_id")

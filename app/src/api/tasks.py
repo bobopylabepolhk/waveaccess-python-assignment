@@ -5,18 +5,26 @@ from fastapi import APIRouter, Depends, status
 from api.dependencies import current_user_id_dep, has_access_dep, has_role_dep
 from core.constants import UserRoles
 from models.response import EntityId
-from models.task import TaskAddModel, TaskEditModel, TasksAsigneeStatus
+from models.task import (
+    TaskAddModel,
+    TaskDisplayModel,
+    TaskDisplayModelWithLinks,
+    TaskEditModel,
+    TasksAsigneeStatus,
+)
 from models.task_linked import TaskLinkedAddModel
+from services.task_history import TaskHistoryService
 from services.task_linked import TaskLinkedService
 from services.tasks import TasksService
 
 TasksServiceDep = Annotated[TasksService, Depends(TasksService)]
+TaskHistoryServiceDep = Annotated[TaskHistoryService, Depends(TaskHistoryService)]
 TasksLinkedServiceDep = Annotated[TaskLinkedService, Depends(TaskLinkedService)]
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
 
 
-@router.get("/", dependencies=[has_access_dep])
+@router.get("/", dependencies=[has_access_dep], response_model=list[TaskDisplayModel])
 async def get_tasks(
     tasks_service: TasksServiceDep,
 ):
@@ -25,17 +33,21 @@ async def get_tasks(
     return tasks
 
 
-@router.get("/{task_id}", dependencies=[has_access_dep])
+@router.get(
+    "/{task_id}",
+    dependencies=[has_access_dep],
+    response_model=TaskDisplayModelWithLinks,
+)
 async def get_task_by_id(
     task_id: int,
     tasks_service: TasksServiceDep,
 ):
-    tasks = await tasks_service.get_task_by_id(task_id)
+    task = await tasks_service.get_task_by_id(task_id)
 
-    return tasks
+    return task
 
 
-@router.post("/", dependencies=[has_access_dep])
+@router.post("/", dependencies=[has_access_dep], response_model=EntityId)
 async def add_task(
     task: TaskAddModel,
     tasks_service: TasksServiceDep,
@@ -57,7 +69,7 @@ async def edit_task(
     return status.HTTP_200_OK
 
 
-@router.patch("/{task_id}/status_asignee")
+@router.patch("/{task_id}/status_asignee", summary="Edit task status or asignee")
 async def edit_task_asignee_status(
     task_id: int,
     asignee_status: TasksAsigneeStatus,
@@ -76,6 +88,19 @@ async def delete_task(task_id: int, tasks_service: TasksServiceDep):
     return status.HTTP_200_OK
 
 
+""" history """
+
+
+@router.get("/{task_id}/history")
+async def get_task_history(task_id: int, task_history_service: TaskHistoryServiceDep):
+    task_history = await task_history_service.get_history(task_id)
+
+    return task_history
+
+
+""" linked tasks """
+
+
 @router.post("/link", dependencies=[has_access_dep])
 async def link_tasks(
     payload: TaskLinkedAddModel, tasks_linked_service: TasksLinkedServiceDep
@@ -85,7 +110,7 @@ async def link_tasks(
     return status.HTTP_200_OK
 
 
-@router.delete("/link", dependencies=[has_access_dep])
+@router.delete("/link", dependencies=[has_access_dep], summary="Unlink tasks")
 async def delete_link(
     payload: TaskLinkedAddModel, tasks_linked_service: TasksLinkedServiceDep
 ):
