@@ -111,6 +111,7 @@ class TasksService:
         async with self.conn as c:
             task: Tasks = await c.adapter.find_by_id_or_404(id)
             linked: list[TaskDisplayModel] = await c.adapter.get_linked_tasks(id)
+            blocked_by, blocking = await c.adapter.get_blocking_tasks(id)
 
             return TaskDisplayModelWithLinks(
                 id=task.id,
@@ -124,6 +125,8 @@ class TasksService:
                 task_type=task.task_type,
                 updated_at=task.updated_at,
                 linked=linked,
+                blocked_by=blocked_by,
+                blocking=blocking,
             )
 
     async def add_task(self, task: TaskAddModel) -> int:

@@ -21,8 +21,8 @@ class TaskDisplayModel(BaseModel):
 
 class TaskDisplayModelWithLinks(TaskDisplayModel):
     linked: Optional[list[TaskDisplayModel]]
-    # blocks: Optional[list[TaskDisplayModel]]
-    # blocked_by: Optional[list[TaskDisplayModel]]
+    blocking: Optional[list[TaskDisplayModel]]
+    blocked_by: Optional[list[TaskDisplayModel]]
 
 
 class TaskModel(BaseModel):

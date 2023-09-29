@@ -10,6 +10,7 @@ from core.constants import TaskPriority, UserRoles
 from core.messages import NOT_FOUND_ASIGNEE_ID
 from db.base import Base
 from db.db import DBAdapter
+from db.task_blocking import TaskBlockingAdapter
 from db.task_history import TaskHistory, TaskHistoryAdapter
 from db.task_linked import TaskLinked, TaskLinkedAdapter
 from db.users import Users
@@ -79,3 +80,15 @@ class TasksAdapter(DBAdapter):
         tasks: list[TaskDisplayModel] = await self.find_by_multiple_ids(task_ids)
 
         return tasks
+
+    async def get_blocking_tasks(self, task_id: int):
+        tasks_blocking = TaskBlockingAdapter(self.session)
+        blocked_by_ids, blocking_ids = await tasks_blocking.get_blocking_ids(task_id)
+        blocked_by: list[TaskDisplayModel] = await self.find_by_multiple_ids(
+            blocked_by_ids
+        )
+        blocking_ids: list[TaskDisplayModel] = await self.find_by_multiple_ids(
+            blocking_ids
+        )
+
+        return (blocked_by, blocking_ids)

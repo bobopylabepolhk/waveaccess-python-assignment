@@ -4,7 +4,6 @@ from typing import Optional, Type
 from sqlalchemy import ForeignKey, Result, select
 from sqlalchemy.orm import Mapped, mapped_column
 
-from core.constants import TaskStatus, TaskType
 from db.base import Base
 from db.db import DBAdapter
 from models.task import TaskModel
@@ -20,8 +19,8 @@ class TaskHistory(Base):
     asignee_id: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"))
     author_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     priority_id: Mapped[int]
-    status: Mapped[TaskStatus]
-    task_type: Mapped[TaskType]
+    status: Mapped[str]
+    task_type: Mapped[str]
 
     updated_by_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     task_id: Mapped[int] = mapped_column(ForeignKey("tasks.id", ondelete="CASCADE"))

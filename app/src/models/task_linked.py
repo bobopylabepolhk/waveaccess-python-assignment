@@ -8,5 +8,3 @@ class TaskLinkedAddModel(BaseModel):
 
 class TaskLinkedModel(TaskLinkedAddModel):
     id: int
-    task_id: int
-    linked_id: int
