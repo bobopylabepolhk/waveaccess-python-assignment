@@ -44,6 +44,4 @@ class SortOrder(str, Enum):
 
 
 DEFAULT_PER_PAGE = 5
-DEFAULT_SORT_KEY = "created_at"
-DEFAULT_SORT_ORDER = SortOrder.DESC
 MAX_PER_PAGE = 15

@@ -3,13 +3,7 @@ from typing import Annotated, Optional
 from fastapi import APIRouter, Depends, status
 
 from api.dependencies import current_user_id_dep, has_access_dep, has_role_dep
-from core.constants import (
-    DEFAULT_PER_PAGE,
-    DEFAULT_SORT_KEY,
-    DEFAULT_SORT_ORDER,
-    SortOrder,
-    UserRoles,
-)
+from core.constants import DEFAULT_PER_PAGE, SortOrder, UserRoles
 from models.pagination import PaginationResponseModel
 from models.response import EntityId
 from models.task import (
@@ -33,13 +27,16 @@ router = APIRouter(prefix="/tasks", tags=["tasks"])
 @router.get("/", dependencies=[has_access_dep], response_model=PaginationResponseModel)
 async def get_tasks(
     tasks_service: TasksServiceDep,
-    sort: str = DEFAULT_SORT_KEY,
+    sort: str = TasksService.DEFAULT_SORT_KEY,
+    sort_order: Optional[SortOrder] = TasksService.DEFAULT_SORT_ORDER,
     page: int = 1,
     per_page: int = DEFAULT_PER_PAGE,
-    sort_order: Optional[SortOrder] = DEFAULT_SORT_ORDER,
 ):
     tasks = await tasks_service.paginator.get_paginated(
-        sort, sort_order, per_page, page
+        sort=sort,
+        sort_order=sort_order,
+        per_page=per_page,
+        page=page,
     )
 
     return tasks

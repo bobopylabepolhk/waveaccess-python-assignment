@@ -1,6 +1,6 @@
 from fastapi import HTTPException
 
-from core.constants import TaskPriority, TaskStatus, UserRoles
+from core.constants import SortOrder, TaskPriority, TaskStatus, UserRoles
 from core.messages import (
     TASK_INVALID_ASIGNEE_ROLE,
     TASK_INVALID_PRIORITY,
@@ -24,9 +24,24 @@ from utils.enum_to_dict import enum_to_dict
 
 
 class TasksService:
+    DEFAULT_SORT_KEY = "updated_at"
+    DEFAULT_SORT_ORDER = SortOrder.DESC
+    AVALIABLE_SORT_KEYS = (
+        "updated_at",
+        "created_at",
+        "name" "description",
+        "status",
+        "task_type",
+    )
+
     def __init__(self):
         self.conn = DBConnector(TasksAdapter)
-        self.paginator = PaginationService(TaskDisplayModel, self.conn)
+        self.paginator = PaginationService(
+            conn=self.conn,
+            default_sort_key=self.DEFAULT_SORT_KEY,
+            default_sort_order=self.DEFAULT_SORT_ORDER,
+            avaliable_sort_keys=self.AVALIABLE_SORT_KEYS,
+        )
         self._status_chain = [e for e in TaskStatus]
 
     def _validate_task_status(self, old_status: TaskStatus, new_status: TaskStatus):
