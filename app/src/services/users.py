@@ -1,25 +1,28 @@
 from fastapi import HTTPException
 
-from core.constants import UserRoles
+from core.constants import SortOrder, UserRoles
 from core.messages import USER_ALREADY_EXISTS, USER_NOT_FOUND_OR_WRONG_PASSWORD
 from core.security import create_jwt, get_password_hash, verify_password
 from core.settings import settings
 from db.db import DBConnector
 from db.users import UsersAdapter
-from models.user import (
-    UserDisplayModel,
-    UserEditModel,
-    UserLoginModel,
-    UserRegisterModel,
-    UserTokenModel,
-)
+from models.user import UserEditModel, UserLoginModel, UserRegisterModel, UserTokenModel
 from services.pagination import PaginationService
 
 
 class UsersService:
+    DEFAULT_SORT_KEY = "login"
+    DEFAULT_SORT_ORDER = SortOrder.ASC
+    AVALIABLE_SORT_KEYS = (DEFAULT_SORT_KEY, "role")
+
     def __init__(self):
         self.conn = DBConnector(UsersAdapter)
-        self.paginator = PaginationService(UserDisplayModel, self.conn)
+        self.paginator = PaginationService(
+            conn=self.conn,
+            default_sort_key=self.DEFAULT_SORT_KEY,
+            default_sort_order=self.DEFAULT_SORT_ORDER,
+            avaliable_sort_keys=self.AVALIABLE_SORT_KEYS,
+        )
 
     def _create_token(self, user: UserTokenModel) -> str:
         payload = user.model_dump()

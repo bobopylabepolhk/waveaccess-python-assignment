@@ -3,7 +3,7 @@ from typing import Annotated, Optional
 from fastapi import APIRouter, Depends
 
 from api.dependencies import has_role_dep
-from core.constants import DEFAULT_SORT_KEY, DEFAULT_SORT_ORDER, SortOrder, UserRoles
+from core.constants import DEFAULT_PER_PAGE, SortOrder, UserRoles
 from models.response import EntityId, JWTResponse
 from models.user import (
     UserDisplayModel,
@@ -24,12 +24,19 @@ router = APIRouter(
 @router.get("/", response_model=list[UserDisplayModel])
 async def get_users(
     users_service: UsersServiceDep,
-    sort: str = DEFAULT_SORT_KEY,
-    sort_order: Optional[SortOrder] = DEFAULT_SORT_ORDER,
+    sort: str = UsersService.DEFAULT_SORT_KEY,
+    sort_order: Optional[SortOrder] = UsersService.DEFAULT_SORT_ORDER,
+    page: int = 1,
+    per_page: int = DEFAULT_PER_PAGE,
 ):
-    tasks = await users_service.paginator.get_sorted(sort, sort_order)
+    users = await users_service.paginator.get_paginated(
+        sort=sort,
+        sort_order=sort_order,
+        per_page=per_page,
+        page=page,
+    )
 
-    return tasks
+    return users
 
 
 @router.post("/login", response_model=JWTResponse)

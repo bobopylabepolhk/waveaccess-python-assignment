@@ -3,7 +3,7 @@ from math import ceil
 from typing import Generic, Optional, Tuple, Type, TypeVar
 
 from fastapi import HTTPException
-from sqlalchemy import Select, asc, delete, desc, func, insert, select, update
+from sqlalchemy import Select, asc, column, delete, desc, func, insert, select, update
 from sqlalchemy.engine import Result
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
@@ -36,38 +36,52 @@ class DBAdapter(Generic[Model]):
 
         return {**data, "updated_at": updated_at}
 
+    def _get_json_from_result(self, res: Result):
+        return [row.to_json() for row in res.scalars().all()]
+
     async def _count_total_items(self, query: Select[Tuple[Base]]) -> int | None:
         stmt = query.with_only_columns(func.count(self.model.id)).order_by(None)
         res: Result = await self.session.execute(stmt)
 
         return res.scalar()
 
+    def _append_search_like_query(
+        self, query: Select[Tuple[Base]], search_key: str, search: str
+    ):
+        return query.where(column(search_key).like(f"%{search}%"))
+
     async def commit(self):
         await self.session.commit()
 
     async def find_all(
-        self, sort: Optional[str], sort_order: Optional[SortOrder]
+        self, sort: Optional[str] = None, sort_order: Optional[SortOrder] = None
     ) -> list[Model]:
         stmt = select(self.model)
         if sort:
             order = asc if sort_order == SortOrder.ASC else desc
             stmt = stmt.order_by(order(sort))
+
         res: Result = await self.session.execute(stmt)
 
-        return [row.to_json() for row in res.scalars().all()]
+        return self._get_json_from_result(res)
 
     async def find_all_with_pagination(
-        self, sort: str, sort_order: SortOrder, per_page: int, page: int
+        self,
+        sort: str,
+        sort_order: SortOrder,
+        per_page: int,
+        page: int,
     ) -> PaginationResponseModel:
         order = asc if sort_order == SortOrder.ASC else desc
         limit = per_page * page
         offset = (page - 1) * per_page
 
         stmt = select(self.model).order_by(order(sort)).limit(limit).offset(offset)
+
         total_items = await self._count_total_items(stmt)
         total_pages = ceil(total_items / per_page)
         res: Result = await self.session.execute(stmt)
-        data = [row.to_json() for row in res.scalars().all()]
+        data = self._get_json_from_result(res)
 
         return PaginationResponseModel(
             data=data,
@@ -87,7 +101,7 @@ class DBAdapter(Generic[Model]):
         stmt = select(self.model).where(self.model.id.in_(ids))
         res: Result = await self.session.execute(stmt)
 
-        return [row.to_json() for row in res.scalars().all()]
+        return self._get_json_from_result(res)
 
     async def find_by_id_or_404(
         self, id: int, error_msg: str = DEFAULT_404_MESSAGE
