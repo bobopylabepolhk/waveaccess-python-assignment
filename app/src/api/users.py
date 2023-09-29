@@ -4,13 +4,9 @@ from fastapi import APIRouter, Depends
 
 from api.dependencies import has_role_dep
 from core.constants import DEFAULT_PER_PAGE, SortOrder, UserRoles
+from models.pagination import PaginationResponseModel
 from models.response import EntityId, JWTResponse
-from models.user import (
-    UserDisplayModel,
-    UserEditModel,
-    UserLoginModel,
-    UserRegisterModel,
-)
+from models.user import UserEditModel, UserLoginModel, UserRegisterModel
 from services.users import UsersService
 
 UsersServiceDep = Annotated[UsersService, Depends(UsersService)]
@@ -21,7 +17,7 @@ router = APIRouter(
 )
 
 
-@router.get("/", response_model=list[UserDisplayModel])
+@router.get("/", response_model=PaginationResponseModel)
 async def get_users(
     users_service: UsersServiceDep,
     sort: str = UsersService.DEFAULT_SORT_KEY,
