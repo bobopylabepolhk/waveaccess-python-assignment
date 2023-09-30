@@ -12,7 +12,9 @@ from models.task import (
     TaskEditModel,
     TasksAsigneeStatus,
 )
+from models.task_blocking import TaskBlockingAddModel
 from models.task_linked import TaskLinkedAddModel
+from services.task_blocking import TaskBlockingService
 from services.task_history import TaskHistoryService
 from services.task_linked import TaskLinkedService
 from services.tasks import TasksService
@@ -20,6 +22,8 @@ from services.tasks import TasksService
 TasksServiceDep = Annotated[TasksService, Depends(TasksService)]
 TaskHistoryServiceDep = Annotated[TaskHistoryService, Depends(TaskHistoryService)]
 TasksLinkedServiceDep = Annotated[TaskLinkedService, Depends(TaskLinkedService)]
+TasksBlockingServiceDep = Annotated[TaskBlockingService, Depends(TaskBlockingService)]
+
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
 
@@ -119,11 +123,35 @@ async def link_tasks(
     return status.HTTP_200_OK
 
 
-@router.delete("/link", dependencies=[has_access_dep], summary="Unlink tasks")
+@router.delete("/unlink", dependencies=[has_access_dep], summary="Unlink tasks")
 async def delete_link(
     payload: TaskLinkedAddModel, tasks_linked_service: TasksLinkedServiceDep
 ):
     is_deleted = await tasks_linked_service.delete_link(payload)
+
+    if is_deleted:
+        return status.HTTP_200_OK
+
+
+""" blocking tasks """
+
+
+@router.post("/block", dependencies=[has_access_dep])
+async def block_task(
+    payload: TaskBlockingAddModel, tasks_blocking_service: TasksBlockingServiceDep
+):
+    await tasks_blocking_service.add_blocking(payload)
+
+    return status.HTTP_200_OK
+
+
+@router.delete(
+    "/unblock", dependencies=[has_access_dep], summary="Delete blocking task"
+)
+async def delete_blocking(
+    payload: TaskBlockingAddModel, tasks_blocking_service: TasksBlockingServiceDep
+):
+    is_deleted = await tasks_blocking_service.delete_blocking(payload)
 
     if is_deleted:
         return status.HTTP_200_OK
