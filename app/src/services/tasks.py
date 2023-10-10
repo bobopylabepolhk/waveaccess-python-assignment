@@ -157,7 +157,7 @@ class TasksService:
             task: TaskModel = await c.adapter.find_by_id_or_404(id)
 
             self._validate_task_status(
-                TaskStatus[task.status], TaskStatus[payload.status]
+                task.status, payload.status
             )
             data = payload.model_dump(by_alias=True)
             await c.adapter.edit_with_history(current_user_id, id, data, task)

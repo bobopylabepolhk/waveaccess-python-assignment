@@ -25,9 +25,9 @@ services:
       - .env
     user: ${POSTGRES_USER}
     ports:
-      - ${PGPORT}:${PGPORT}
+      - 5432:5432
     expose:
-      - ${PGPORT}
+      - 5432
     networks:
       - backend
 
