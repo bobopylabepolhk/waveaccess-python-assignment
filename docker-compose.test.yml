@@ -1,0 +1,26 @@
+version: '3'
+services:
+  waveaccess-python-assignment:
+    depends_on:
+      - pgsql_test
+    env_file:
+      - .env.test
+  
+  pgsql_test:
+    container_name: pgsql_test
+    image: postgres:14
+    volumes:
+      - postgres_data_test:/var/lib/postgresql/data
+    env_file:
+      - .env.test
+    user: ${POSTGRES_USER}
+    ports:
+      - 5433:5433
+    expose:
+      - 5433
+    networks:
+      - backend
+
+volumes:
+  waveaccess-python-assignment-test:
+  postgres_data_test:

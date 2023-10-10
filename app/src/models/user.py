@@ -3,6 +3,8 @@ from typing import Optional
 
 from pydantic import BaseModel
 
+from core.constants import UserRoles
+
 
 class UserDisplayModel(BaseModel):
     id: int
@@ -23,7 +25,7 @@ class UserLoginModel(BaseModel):
 
 
 class UserRegisterModel(UserLoginModel):
-    role: Optional[int]
+    role: UserRoles
 
 
 class UserTokenModel(BaseModel):

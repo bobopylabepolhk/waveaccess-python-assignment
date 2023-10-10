@@ -11,31 +11,22 @@
 		3.3. Изменение статуса в зависимости от роли;
 		3.4. История изменений;
 		3.5. Списки блокирующих и блокируемых тасок;
-	4. Легковоспроизводимая сборка (docker compose + alembic)
+	4. Легковоспроизводимая сборка
 	5. Юнит-тесты
-
 
 ## Сборка для локальной разработки
 
-Задать переменные окружения — переименовать **.env.example** в **.env**
+Установить [task-cli](https://taskfile.dev/installation/).
+Установить [poetry](https://python-poetry.org/docs/#installation).
+Задать переменные окружения в **.env**. Можно скопировать из **.env.test**.
 
-### Запустить сервисы
-
-```bash
-  cd app
-  docker compose up
-```
-
-установить poetry
+### Команды
 
 ```bash
-  pip install poetry
-  poetry install
-  poetry shell
-```
-
-и запустить миграции
-
-```bash
-  alembic upgrade head
+  task start — запустить сервисы и выполнить миграции
+  task test — создать тестовую базу и прогнать тесты 
+  task up — docker compose up
+  task down — docker compose up
+  task upgrade-dev — выполнить миграции
+  task upgrade-dev — выполнить на тестовой базе
 ```

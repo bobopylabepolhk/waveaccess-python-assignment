@@ -3,7 +3,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env")
+    testing: bool = Field(default=False)
+    base_url: str = "BASE_URL"
 
     jwt_secret: str = "SECRET_KEY"
     jwt_algo: str = "HS256"
@@ -16,8 +17,10 @@ class Settings(BaseSettings):
     pgport: int = Field(default=5432)
     postgres_db: str = Field(default="postgres")
 
+    model_config = SettingsConfigDict(extra="ignore")
+
     def get_pg_conn_str(self, is_local: bool = False) -> str:
-        host = "localhost" if is_local else self.pghost
+        host = "localhost" if is_local or self.testing else self.pghost
 
         return "postgresql+asyncpg://{}:{}@{}:{}/{}".format(
             self.postgres_user,

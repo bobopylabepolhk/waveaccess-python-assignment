@@ -1,0 +1,43 @@
+version: '3'
+
+tasks:
+  start:
+    cmds:
+      - docker-compose up --build -d
+      - task: upgrade-dev
+  
+  up:
+    cmds:
+      - docker-compose up
+  
+  down:
+    cmds:
+      - docker-compose down
+  
+  test:
+    dotenv: [.env.test]
+    cmds:
+      - docker-compose -f docker-compose.yml -f docker-compose.test.yml up -d
+      - task: upgrade-test
+      - cmd: poetry --directory app run pytest
+        silent: true
+        ignore_error: true
+      - docker stop pgsql_test
+      - docker rm -f -v pgsql_test
+      - docker volume rm -f waveaccess-python-assignment_postgres_data_test
+      - cmd: docker-compose up -d
+        silent: true
+  
+  # migrate:
+  #   dir: app
+  #   cmds: poetry run alembic revision --autogenerate {{.CLI_ARGS}}
+
+  upgrade-dev:
+    dir: app
+    cmds:
+      - poetry run alembic upgrade head
+  
+  upgrade-test:
+    dir: app
+    cmds:
+      - poetry run alembic -x ENV=.env.test upgrade head
