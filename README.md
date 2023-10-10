@@ -26,7 +26,7 @@
   task start — запустить сервисы и выполнить миграции
   task test — создать тестовую базу и прогнать тесты 
   task up — docker compose up
-  task down — docker compose up
+  task down — docker compose down
   task upgrade-dev — выполнить миграции
   task upgrade-dev — выполнить на тестовой базе
   task migrate -- "migration description" — автоген миграции
