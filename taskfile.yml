@@ -28,9 +28,10 @@ tasks:
       - cmd: docker-compose up -d
         silent: true
   
-  # migrate:
-  #   dir: app
-  #   cmds: poetry run alembic revision --autogenerate {{.CLI_ARGS}}
+  migrate:
+    dir: app
+    cmds: 
+      - poetry run alembic revision --autogenerate -m {{.CLI_ARGS}}
 
   upgrade-dev:
     dir: app

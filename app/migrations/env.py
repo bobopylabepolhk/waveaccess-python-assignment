@@ -16,13 +16,13 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # >> alembic.ini: prepend_sys_path already set to .src
-from dotenv import load_dotenv, find_dotenv
+from dotenv import find_dotenv, load_dotenv
 
 from core.settings import Settings
 from db import *
 from db.base import Base
 
-env_filename = context.get_x_argument(as_dictionary=True).get('ENV') or '.env'
+env_filename = context.get_x_argument(as_dictionary=True).get("ENV") or ".env"
 load_dotenv(find_dotenv(env_filename))
 
 settings = Settings()

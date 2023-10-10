@@ -29,4 +29,5 @@
   task down — docker compose up
   task upgrade-dev — выполнить миграции
   task upgrade-dev — выполнить на тестовой базе
+  task migrate -- "migration description" — автоген миграции
 ```

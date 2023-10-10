@@ -1,11 +1,11 @@
 import asyncio
-from httpx import AsyncClient
+
 import pytest
+from httpx import AsyncClient
 
-from app.src.main import app
-from app.src.core.settings import Settings
 import app.src.core.settings as config
-
+from app.src.core.settings import Settings
+from app.src.main import app
 
 config.settings = Settings(_env_file=".env.test")
 
